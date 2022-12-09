@@ -1,0 +1,37 @@
+#!/bin/bash
+
+_mailtransactionautocomplete()
+{
+
+    local currentArg previousArg mailArgs sendArgs apiKeyArgs
+    COMPREPLY=()
+    currentArg="${COMP_WORDS[COMP_CWORD]}"
+    previousArg="${COMP_WORDS[COMP_CWORD-1]}"
+
+    mailArgs="send set-api-key update help"
+    sendArgs="help"
+    apiKeyArgs="help"
+    
+    if [[ "$previousArg" == "mail-transaction" ]]; then # show `mail-transaction` hints
+
+        COMPREPLY=( $(compgen -W "${mailArgs}" ${currentArg}) )
+        return 0
+
+    elif [[ "$previousArg" == "send" ]]; then # show `send` hints
+
+        COMPREPLY=( $(compgen -W "${sendArgs}" ${currentArg}) )
+        return 0
+
+    elif [[ "$previousArg" == "set-api-key" ]]; then # show `set-api-key` hints
+
+        COMPREPLY=( $(compgen -W "${apiKeyArgs}" ${currentArg}) )
+        return 0
+
+    else # return no error otherwise
+        
+        return 0
+
+    fi
+
+}
+complete -o nosort -o nospace -F _mailtransactionautocomplete mail-transaction

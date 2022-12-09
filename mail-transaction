@@ -1,0 +1,255 @@
+#!/bin/bash
+
+#
+# Variables
+#
+
+# text
+Cyan='\033[0;36m'
+Yellow='\033[1;33m'
+Red='\033[0;31m'
+Orange='\033[0;33m'
+Green='\033[0;32m'
+NC='\033[0;0m'
+EOL='\n'
+SPACER='\n\n'
+INDENT='    '
+BOLD='\033[1m'
+HAIR='\033[0m'
+ITALIC='\033[3m'
+
+GIT_URI='\e]8;;https://git-scm.com/download/\e\\Git\e]8;;\e\\'
+CURL_URI='\e]8;;https://curl.se/\e\\CURL\e]8;;\e\\'
+
+function output_man {
+
+    printf "${EOL}"
+    printf "${INDENT}Usage: ${BOLD}mail-transaction${HAIR} SUB-COMMAND${SPACER}"
+    printf "${INDENT}Sub-commands:${EOL}"
+    printf "${INDENT}${INDENT}${BOLD}send${HAIR}     Sends the GC Notify mail.${SPACER}"
+    printf "${INDENT}${INDENT}         Usage: ${BOLD}mail-transaction send${HAIR} <TEMPLATE-ID> <RECIPIENT> <DATA>${SPACER}"
+    printf "${INDENT}${INDENT}         ARGS:${EOL}"
+    printf "${INDENT}${INDENT}          ${INDENT}${BOLD}<TEMPLATE-ID>${HAIR}   The GC Notify template ID. ${BOLD}REQUIRED${HAIR}${SPACER}"
+    printf "${INDENT}${INDENT}          ${INDENT}${BOLD}<RECIPIENT>${HAIR}     The recipient address. ${BOLD}REQUIRED${HAIR}${SPACER}"
+    printf "${INDENT}${INDENT}          ${INDENT}${BOLD}<DATA>${HAIR}          The personalisation data for the template. ${BOLD}OPTIONAL${HAIR}${SPACER}"
+    printf "${INDENT}${INDENT}${BOLD}set-api-key${HAIR}   Sets the GC Notify API-key on the system for the command tool.${SPACER}"
+    printf "${INDENT}${INDENT}              Usage: ${BOLD}mail-transaction set-api-key${HAIR} <API-KEY>${SPACER}"
+    printf "${INDENT}${INDENT}${BOLD}update${HAIR}        Updates the transactional-mail.${SPACER}"
+    printf "${INDENT}${INDENT}${BOLD}help${HAIR}          Outputs this manual.${EOL}"
+    printf "${EOL}"
+
+}
+
+function output_send_man {
+
+    printf "${EOL}"
+    printf "${INDENT}Usage: ${BOLD}mail-transaction send${HAIR} <TEMPLATE-ID> <RECIPIENT> <DATA>${SPACER}"
+    printf "${INDENT}ARGS:${EOL}"
+    printf "${INDENT}${INDENT}${BOLD}<TEMPLATE-ID>${HAIR}   The GC Notify template ID. ${BOLD}REQUIRED${HAIR}${SPACER}"
+    printf "${INDENT}${INDENT}${BOLD}<RECIPIENT>${HAIR}     The recipient address. ${BOLD}REQUIRED${HAIR}${SPACER}"
+    printf "${INDENT}${INDENT}${BOLD}<DATA>${HAIR}          The personalisation data for the template. ${BOLD}OPTIONAL${HAIR}${SPACER}"
+    printf "${INDENT}Sub-commands:${EOL}"
+    printf "${INDENT}${INDENT}${BOLD}help${HAIR}        Outputs this manual.${EOL}"
+    printf "${EOL}"
+
+}
+
+function output_set_api_key_man {
+
+    printf "${EOL}"
+    printf "${INDENT}Usage: ${BOLD}mail-transaction set-api-key${HAIR} <API-KEY>${SPACER}"
+    printf "${INDENT}ARGS:${EOL}"
+    printf "${INDENT}${INDENT}${BOLD}<API-KEY>${HAIR}   Sets the GC Notify API-key on the system for the command tool.${SPACER}"
+    printf "${INDENT}Sub-Commands:${EOL}"
+    printf "${INDENT}${INDENT}${BOLD}help${HAIR}        Outputs this manual.${EOL}"
+    printf "${EOL}"
+
+}
+
+function send {
+
+    if [[ -x "$(command -v curl)" ]]; then
+
+        if [[ $2 ]]; then
+
+            if [[ $2 == "help" ]]; then
+
+                output_send_man
+
+            else
+
+                if [[ -f "$(dirname "$(which mail-transaction)")/.secret" ]]; then
+
+                    templateID="$2"
+                    recipient="$3"
+                    data="$4"
+                    apiKey=$(head -1 $(dirname "$(which mail-transaction)")/.secret)
+
+                    if [[ "$apiKey" ]]; then
+
+                        if [[ ! "$data" ]]; then
+                            data='{}'
+                        fi
+
+                        body="{\"email_address\":\"${recipient}\",\"template_id\":\"${templateID}\",\"personalisation\":${data},\"reference\":\"transactional\"}"
+
+                        uri="https://api.notification.canada.ca/v2/notifications/email"
+                        authHeader="Authorization: ApiKey-v1 ${apiKey}"
+                        contentHeader="Content-Type: application/json"
+
+                        response=$(curl --request POST --url "${uri}" --header "${authHeader}" --header "${contentHeader}" --data "${body}" --insecure --silent --write-out "\n%{response_code}")
+                        response=(${response[@]})
+                        code=${response[-1]}
+                        body=${response[@]::${#response[@]}-1}
+
+                        if [[ $code == 20* || $code == 30* ]]; then
+
+                            printf "${EOL}"
+                            printf "${Green}${INDENT}Sent email via GC Notify: OK (${code})${NC}${EOL}"
+                            printf "${EOL}"
+                            exit 0
+
+                        else
+
+                            printf "${EOL}"
+                            printf "${Red}${INDENT}Sent email via GC Notify: FAIL (${code})${NC}${EOL}"
+                            printf "${Red}${INDENT}${body}${NC}${EOL}"
+                            printf "${EOL}"
+                            exit 1
+
+                        fi
+
+                    else
+
+                        printf "${EOL}"
+                        printf "${Yellow}${INDENT}A blank API Key is set for the command line tool. See [ mail-transaction set-api-key help ] for details${NC}${EOL}"
+                        printf "${EOL}"
+
+                    fi
+
+                else
+
+                    printf "${EOL}"
+                    printf "${Yellow}${INDENT}No API Key set for the command line tool. See [ mail-transaction set-api-key help ] for details${NC}${EOL}"
+                    printf "${EOL}"
+
+                fi
+
+            fi
+
+        else
+
+            printf "${EOL}"
+            printf "${Yellow}${INDENT}Please supply all required ARGS${NC}${EOL}"
+            output_send_man
+
+        fi
+
+    else
+
+        printf "${EOL}"
+        printf "${Red}${INDENT}${BOLD}${CURL_URI} not found. ${ITALIC}${BOLD}mail-transaction${HAIR}${Red}${BOLD} requires ${CURL_URI} to be installed and available in your ${ITALIC}${BOLD}PATH${HAIR}${Red}${BOLD} variable.${HAIR}${NC}${SPACER}"
+
+    fi
+
+}
+
+function set_api_key {
+
+    if [[ $2 ]]; then
+
+        if [[ $2 == "help" ]]; then
+
+            output_set_api_key_man
+
+        else
+
+            echo $2 > $(echo $(dirname "$(which mail-transaction)"))/.secret
+            if [[ $? -eq 0 ]]; then
+                printf "${EOL}"
+                printf "${Green}${INDENT}Set GC Notify API Key: OK${NC}${EOL}"
+                printf "${EOL}"
+            else
+                printf "${EOL}"
+                printf "${Red}${INDENT}Set GC Notify API Key: FAIL${NC}${EOL}"
+                printf "${EOL}"
+            fi
+
+        fi
+
+    else
+
+        printf "${EOL}"
+        printf "${Yellow}${INDENT}Please supply an API-KEY${NC}${EOL}"
+        output_set_api_key_man
+
+    fi
+
+}
+
+function update_command {
+
+    if [[ -x "$(command -v git)" ]]; then
+
+        printf "${EOL}"
+        printf "${Cyan}${INDENT}Fetching transactional-mail updates...${NC}${EOL}"
+
+        cd $(dirname "$(which mail-transaction)")
+        git fetch
+
+        if [[ "$(git rev-parse HEAD)" != "$(git rev-parse FETCH_HEAD)" ]]; then
+
+            printf "${Cyan}${INDENT}Pulling latest transactional-mail changes...${NC}${EOL}"
+            git pull
+
+        else
+
+            printf "${Cyan}${INDENT}No updates available${NC}${EOL}"
+
+        fi
+
+        printf "${EOL}"
+
+    else
+
+        printf "${EOL}"
+        printf "${Red}${INDENT}${BOLD}${GIT_URI} not found. Updating ${ITALIC}${BOLD}transactional-mail${HAIR}${Red}${BOLD} requires ${GIT_URI} to be installed and available in your ${ITALIC}${BOLD}PATH${HAIR}${Red}${BOLD} variable.${HAIR}${NC}${SPACER}"
+
+    fi
+
+}
+
+# check for first command
+if [[ $1 ]]; then
+
+    if [[ $1 == "send" ]]; then
+
+        send "$@"
+
+    elif [[ $1 == "set-api-key" ]]; then
+
+        set_api_key "$@"
+
+    elif [[ $1 == "update" ]]; then
+
+        update_command
+
+    elif [[ $1 == "help"  ]]; then
+
+        output_man
+
+    else
+
+        printf "${EOL}"
+        printf "${Yellow}${INDENT}SUB-COMMAND ${ITALIC}${BOLD}$1${HAIR}${Yellow}${BOLD} not found${NC}${EOL}"
+        output_man
+
+    fi
+
+else
+
+    printf "${EOL}"
+    printf "${Yellow}${INDENT}Please supply a SUB-COMMAND${NC}${EOL}"
+    output_man
+
+fi
