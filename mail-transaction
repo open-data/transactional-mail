@@ -17,6 +17,7 @@ INDENT='    '
 BOLD='\033[1m'
 HAIR='\033[0m'
 ITALIC='\033[3m'
+ESC_QUOTE='\\"'
 
 GIT_URI='\e]8;;https://git-scm.com/download/\e\\Git\e]8;;\e\\'
 CURL_URI='\e]8;;https://curl.se/\e\\CURL\e]8;;\e\\'
@@ -31,7 +32,8 @@ function output_man {
     printf "${INDENT}${INDENT}         ARGS:${EOL}"
     printf "${INDENT}${INDENT}          ${INDENT}${BOLD}<TEMPLATE-ID>${HAIR}   The GC Notify template ID. ${BOLD}REQUIRED${HAIR}${SPACER}"
     printf "${INDENT}${INDENT}          ${INDENT}${BOLD}<RECIPIENT>${HAIR}     The recipient address. ${BOLD}REQUIRED${HAIR}${SPACER}"
-    printf "${INDENT}${INDENT}          ${INDENT}${BOLD}<DATA>${HAIR}          The personalisation data for the template. ${BOLD}OPTIONAL${HAIR}${SPACER}"
+    printf "${INDENT}${INDENT}          ${INDENT}${BOLD}<DATA>${HAIR}          The personalisation data for the template as an escape json object. ${BOLD}OPTIONAL${HAIR}${EOL}"
+    printf "${INDENT}${INDENT}                          ${INDENT}${BOLD}Example:${HAIR} {${ESC_QUOTE}name${ESC_QUOTE}:${ESC_QUOTE}Jeffy${ESC_QUOTE}}${SPACER}"
     printf "${INDENT}${INDENT}${BOLD}set-api-key${HAIR}   Sets the GC Notify API-key on the system for the command tool.${SPACER}"
     printf "${INDENT}${INDENT}              Usage: ${BOLD}mail-transaction set-api-key${HAIR} <API-KEY>${SPACER}"
     printf "${INDENT}${INDENT}${BOLD}update${HAIR}        Updates the transactional-mail.${SPACER}"
@@ -47,7 +49,8 @@ function output_send_man {
     printf "${INDENT}ARGS:${EOL}"
     printf "${INDENT}${INDENT}${BOLD}<TEMPLATE-ID>${HAIR}   The GC Notify template ID. ${BOLD}REQUIRED${HAIR}${SPACER}"
     printf "${INDENT}${INDENT}${BOLD}<RECIPIENT>${HAIR}     The recipient address. ${BOLD}REQUIRED${HAIR}${SPACER}"
-    printf "${INDENT}${INDENT}${BOLD}<DATA>${HAIR}          The personalisation data for the template. ${BOLD}OPTIONAL${HAIR}${SPACER}"
+    printf "${INDENT}${INDENT}${BOLD}<DATA>${HAIR}          The personalisation data for the template as an escape json object. ${BOLD}OPTIONAL${HAIR}${EOL}"
+    printf "${INDENT}${INDENT}            ${INDENT}${BOLD}Example:${HAIR} {${ESC_QUOTE}name${ESC_QUOTE}:${ESC_QUOTE}Jeffy${ESC_QUOTE}}${SPACER}"
     printf "${INDENT}Sub-commands:${EOL}"
     printf "${INDENT}${INDENT}${BOLD}help${HAIR}        Outputs this manual.${EOL}"
     printf "${EOL}"
@@ -91,7 +94,15 @@ function send {
                             data='{}'
                         fi
 
-                        body="{\"email_address\":\"${recipient}\",\"template_id\":\"${templateID}\",\"personalisation\":${data},\"reference\":\"transactional\"}"
+                        reference='transactional'
+                        if [[ -x "$(command -v hostname)" ]]; then
+                            reference=$(hostname)
+                            if [[ -x "$(command -v ps)" && "$PPID" ]]; then
+                                reference="${reference} ($(ps -o args= $PPID))"
+                            fi
+                        fi
+
+                        body="{\"email_address\":\"${recipient}\",\"template_id\":\"${templateID}\",\"personalisation\":${data},\"reference\":\"${reference}\"}"
 
                         uri="https://api.notification.canada.ca/v2/notifications/email"
                         authHeader="Authorization: ApiKey-v1 ${apiKey}"
