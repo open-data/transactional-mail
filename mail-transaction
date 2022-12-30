@@ -124,7 +124,11 @@ function send {
 
                             printf "${EOL}"
                             printf "${Red}${INDENT}Sent email via GC Notify: FAIL (${code})${NC}${EOL}"
-                            printf "${Red}${INDENT}${body}${NC}${EOL}"
+                            if [[ $code != 40* ]]; then
+                                printf "${Red}${INDENT}${body}${NC}${EOL}"
+                            else
+                                printf "${Red}${INDENT}GC Notify returned an HTML page which cannot be outputted to the shell...${NC}${EOL}"
+                            fi
                             printf "${EOL}"
                             exit 1
 
