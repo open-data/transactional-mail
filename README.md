@@ -20,6 +20,6 @@ mail-transaction send <TEMPLATE_ID> <RECIPIENT> {\"name\":\"Jeffy\"\,\"country\"
 ### In a Shell Script
 
 ````
-personalisation_data=$(echo {\"name\":\"Jeffy\"\,\"country\":\"Canada\"} | sed 's/ /\\r\\n/g')
+personalisation_data=$(echo {\"name\":\"Jeffy\"\,\"country\":\"Canada\"})
 mail-transaction send <TEMPLATE_ID> <RECIPIENT> "$(echo "$personalisation_data")" || true
 ````
