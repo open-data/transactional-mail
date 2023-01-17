@@ -139,6 +139,7 @@ function send {
                         printf "${EOL}"
                         printf "${Yellow}${INDENT}A blank API Key is set for the command line tool. See [ mail-transaction set-api-key help ] for details${NC}${EOL}"
                         printf "${EOL}"
+                        exit 1
 
                     fi
 
@@ -147,6 +148,7 @@ function send {
                     printf "${EOL}"
                     printf "${Yellow}${INDENT}No API Key set for the command line tool. See [ mail-transaction set-api-key help ] for details${NC}${EOL}"
                     printf "${EOL}"
+                    exit 1
 
                 fi
 
@@ -157,6 +159,7 @@ function send {
             printf "${EOL}"
             printf "${Yellow}${INDENT}Please supply all required ARGS${NC}${EOL}"
             output_send_man
+            exit 1
 
         fi
 
@@ -164,6 +167,7 @@ function send {
 
         printf "${EOL}"
         printf "${Red}${INDENT}${BOLD}${CURL_URI} not found. ${ITALIC}${BOLD}mail-transaction${HAIR}${Red}${BOLD} requires ${CURL_URI} to be installed and available in your ${ITALIC}${BOLD}PATH${HAIR}${Red}${BOLD} variable.${HAIR}${NC}${SPACER}"
+        exit 1
 
     fi
 
@@ -184,10 +188,12 @@ function set_api_key {
                 printf "${EOL}"
                 printf "${Green}${INDENT}Set GC Notify API Key: OK${NC}${EOL}"
                 printf "${EOL}"
+                exit 0
             else
                 printf "${EOL}"
                 printf "${Red}${INDENT}Set GC Notify API Key: FAIL${NC}${EOL}"
                 printf "${EOL}"
+                exit 1
             fi
 
         fi
@@ -197,6 +203,7 @@ function set_api_key {
         printf "${EOL}"
         printf "${Yellow}${INDENT}Please supply an API-KEY${NC}${EOL}"
         output_set_api_key_man
+        exit 1
 
     fi
 
@@ -224,11 +231,13 @@ function update_command {
         fi
 
         printf "${EOL}"
+        exit 0
 
     else
 
         printf "${EOL}"
         printf "${Red}${INDENT}${BOLD}${GIT_URI} not found. Updating ${ITALIC}${BOLD}transactional-mail${HAIR}${Red}${BOLD} requires ${GIT_URI} to be installed and available in your ${ITALIC}${BOLD}PATH${HAIR}${Red}${BOLD} variable.${HAIR}${NC}${SPACER}"
+        exit 1
 
     fi
 
@@ -258,6 +267,7 @@ if [[ $1 ]]; then
         printf "${EOL}"
         printf "${Yellow}${INDENT}SUB-COMMAND ${ITALIC}${BOLD}$1${HAIR}${Yellow}${BOLD} not found${NC}${EOL}"
         output_man
+        exit 1
 
     fi
 
@@ -266,5 +276,6 @@ else
     printf "${EOL}"
     printf "${Yellow}${INDENT}Please supply a SUB-COMMAND${NC}${EOL}"
     output_man
+    exit 1
 
 fi
