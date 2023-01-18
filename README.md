@@ -27,5 +27,5 @@ mail-transaction send <TEMPLATE_ID> <RECIPIENT> "$(echo "$personalisation_data")
 #### Executing as Another USer
 
 ```
-sudo -u <USERNAME> /bin/bash -c 'source $HOME/.bashrc; personalisation_data=$(echo {\"name\":\"Jeffy\"\,\"country\":\"Canada\"}); mail-transaction send <TEMPLATE_ID> <RECIPIENT> "$(echo "$personalisation_data")"
+sudo -u <USERNAME> /bin/bash -c 'source $HOME/.bashrc; personalisation_data=$(echo {\"name\":\"Jeffy\"\,\"country\":\"Canada\"}); mail-transaction send <TEMPLATE_ID> <RECIPIENT> "$(echo "$personalisation_data")";'
 ```
