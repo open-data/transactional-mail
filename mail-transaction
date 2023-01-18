@@ -98,7 +98,12 @@ function send {
                         if [[ -x "$(command -v hostname)" ]]; then
                             reference=$(hostname)
                             if [[ -x "$(command -v ps)" && "$PPID" ]]; then
-                                reference="${reference} ($(ps -o args= $PPID))"
+                                executing_script="$(ps -o args= $PPID)"
+                                if [[ "$executing_script" == *"bash -c"* ]]; then
+                                    reference="${reference} (/bin/bash -c)"
+                                else
+                                    reference="${reference} (${executing_script})"
+                                fi
                             fi
                         fi
 
